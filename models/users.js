@@ -10,6 +10,7 @@ const userSchema = mongoose.Schema({
         value: Number,
         date: Date,
     }],
+    creationDate: Date,
 });
 
 const User = mongoose.model('users', userSchema);
