@@ -31,7 +31,7 @@ router.post('/signup', (req, res) => {
 
           newUser.save().then(newDoc => {
             const { token, username, email, wallets } = newDoc
-            res.json({ result: true, token, username, email, wallets});
+            res.json({ result: true, token, username, email, wallets });
           });
 
         } else {
@@ -63,33 +63,42 @@ router.post('/signin', (req, res) => {
 });
 
 router.put('/:token/addWallet', (req, res) => {
-  const user = req.params.token
-  const walletAddress = req.body.walletAddress
+  const token = req.params.token
+  const walletAddress = req.body.address
+  console.log("walletAddress:", walletAddress)
 
   Wallet.findOne({ address: walletAddress })
     .then(wallet => {
       console.log(wallet)
       if (!wallet) {
+        console.log("wallet not found route put")
         return res.json({ result: false, error: 'Wallet not found' });
       }
-      User.updateOne(
-        { _id: user },
-        { $push: { wallets: wallet._id } }
-      ).then(data => {
-        if (data.modifiedCount > 0) {
-          console.log("wallet added", data)
-          res.json({ result: true });
-        } else {
-          console.log("erreur route put add wallet")
-          res.json({ result: false, error: "error route put add wallet" })
-        }
-      });
+      User.findOne({ token })
+        .then(user => {
+          console.log("user", user)
+          if (!user) {
+            return res.json({ result: false, error: 'User not found' });
+          }
+          User.updateOne(
+            { _id: user._id },
+            { $push: { wallets: wallet._id } }
+          ).then(data => {
+            if (data.modifiedCount > 0) {
+              console.log("wallet added", data)
+              res.json({ result: true });
+            } else {
+              console.log("erreur route put add wallet")
+              res.json({ result: false, error: "error route put add wallet" })
+            }
+          });
+        })
     })
 })
 
 router.put('/:token/removeWallet', (req, res) => {
-  const user = req.params.token
-  const walletAddress = req.body.walletAddress
+  const token = req.params.token
+  const walletAddress = req.body.address
 
   Wallet.findOne({ address: walletAddress })
     .then(wallet => {
@@ -97,18 +106,25 @@ router.put('/:token/removeWallet', (req, res) => {
       if (!wallet) {
         return res.json({ result: false, error: 'Wallet not found' });
       }
-      User.updateOne(
-        { _id: user },
-        { $pull: { wallets: wallet._id } }
-      ).then(data => {
-        if (data.modifiedCount > 0) {
-          console.log("wallet added", data)
-          res.json({ result: true });
-        } else {
-          console.log("erreur route put add wallet")
-          res.json({ result: false, error: "error route put add wallet" })
-        }
-      });
+      User.findOne({ token })
+        .then(user => {
+          console.log("user", user)
+          if (!user) {
+            return res.json({ result: false, error: 'User not found' });
+          }
+          User.updateOne(
+            { _id: user },
+            { $pull: { wallets: wallet._id } }
+          ).then(data => {
+            if (data.modifiedCount > 0) {
+              console.log("wallet added", data)
+              res.json({ result: true });
+            } else {
+              console.log("erreur route put add wallet")
+              res.json({ result: false, error: "error route put add wallet" })
+            }
+          });
+        })
     })
 })
 
