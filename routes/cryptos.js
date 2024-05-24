@@ -7,8 +7,8 @@ const User = require('../models/users');
 
 const ETH_API_KEY="ZGJ85Q1912CX99S2A9JE6Q1VYPDVK9KC5S"
 
-router.put('/contentWallet', (req, res) => {
-    const { token } = req.body;
+router.put('/contentWallet/:token', (req, res) => {
+    const { token } = req.params;
     User.findOne({ token })
         .populate("wallets")
         .then(user => {
@@ -44,7 +44,7 @@ router.put('/contentWallet', (req, res) => {
                                             throw new Error('token not found');
                                         }
                                         const cryptoId = crypto._id;
-                                        return Wallet.updateOne(
+                                        return Wallet.updateMany(
                                             { address },
                                             { $set: { holdings: [] } }
                                         )
@@ -52,7 +52,7 @@ router.put('/contentWallet', (req, res) => {
                                                 if (wallet.modifiedCount > 0) {
                                                     console.log("wallet reinitialized");
                                                 }
-                                                return Wallet.updateOne(
+                                                return Wallet.updateMany(
                                                     { address },
                                                     {
                                                         $push: {
@@ -64,7 +64,7 @@ router.put('/contentWallet', (req, res) => {
                                                     }
                                                 ).then(updated => {
                                                     if (updated.modifiedCount > 0) {
-                                                        console.log("wallet updated");
+                                                        console.log(`wallet updated : ${address}`);
                                                     }
                                                 })
                                             });
@@ -91,7 +91,7 @@ router.put('/contentWallet', (req, res) => {
                                             throw new Error('token not found');
                                         }
                                         const cryptoId = crypto._id;
-                                        return Wallet.updateOne(
+                                        return Wallet.updateMany(
                                             { address },
                                             { $set: { holdings: [] } }
                                         )
@@ -99,7 +99,7 @@ router.put('/contentWallet', (req, res) => {
                                                 if (wallet.modifiedCount > 0) {
                                                     console.log("wallet reinitialized");
                                                 }
-                                                return Wallet.updateOne(
+                                                return Wallet.updateMany(
                                                     { address },
                                                     {
                                                         $push: {
@@ -111,7 +111,7 @@ router.put('/contentWallet', (req, res) => {
                                                     }
                                                 ).then(updated => {
                                                     if (updated.modifiedCount > 0) {
-                                                        console.log("wallet updated");
+                                                        console.log(`wallet updated : ${address}`);
                                                     }
                                                 })
                                             });
@@ -135,7 +135,7 @@ router.put('/contentWallet', (req, res) => {
                                             throw new Error('token not found');
                                         }
                                         const cryptoId = crypto._id;
-                                        return Wallet.updateOne(
+                                        return Wallet.updateMany(
                                             { address },
                                             { $set: { holdings: [] } }
                                         )
@@ -143,7 +143,7 @@ router.put('/contentWallet', (req, res) => {
                                                 if (wallet.modifiedCount > 0) {
                                                     console.log("wallet reinitialized");
                                                 }
-                                                return Wallet.updateOne(
+                                                return Wallet.updateMany(
                                                     { address },
                                                     {
                                                         $push: {
@@ -155,7 +155,7 @@ router.put('/contentWallet', (req, res) => {
                                                     }
                                                 ).then(updated => {
                                                     if (updated.modifiedCount > 0) {
-                                                        console.log("wallet updated");
+                                                        console.log(`wallet updated : ${address}`);
                                                     }
                                                 })
                                             });
