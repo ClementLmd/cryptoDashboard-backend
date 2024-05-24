@@ -49,10 +49,21 @@ router.get('/:token', (req, res) => {
 
             Wallet.find({ user: user._id })
                 .populate('user')
+                .populate('holdings.crypto')
                 .then(listWallets => {
                     if (listWallets) {
                         console.log("liste des wallets d'un user:", listWallets)
-                        res.json({ result: true, listWallets })
+                        const listWalletsLessId = listWallets.map(wallet => {
+                            return {
+                                nameWallet: wallet.nameWallet,
+                                address: wallet.address,
+                                user: wallet.user,
+                                blockchain: wallet.blockchain,
+                                holdings: wallet.holdings
+                            };
+                        }
+                        )
+                        res.json({ result: true, listWallets: listWalletsLessId })
                     }
                     else {
                         res.json({ result: false, error: "This user has no wallets" })
