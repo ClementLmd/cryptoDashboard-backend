@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 
 const User = require('../models/users');
+const Wallet = require('../models/wallets');
 const { checkBody } = require('../modules/checkBody');
 const bcrypt = require('bcrypt'); //cryptage mot de passe
 const uid2 = require('uid2'); //création token utilisateur
@@ -24,11 +25,13 @@ router.post('/signup', (req, res) => {
             email: req.body.email,
             password: hash,
             token: uid2(32),
+            wallets: [],
             creationDate: Date.now(),
           });
 
           newUser.save().then(newDoc => {
-            res.json({ result: true, data: newDoc });
+            const { token, username, email, wallets } = newDoc
+            res.json({ result: true, token, username, email, wallets });
           });
 
         } else {
@@ -51,11 +54,114 @@ router.post('/signin', (req, res) => {
 
   User.findOne({ username: req.body.username }).then(data => {
     if (data && bcrypt.compareSync(req.body.password, data.password)) {
-      res.json({ result: true, data });
+      const { token, username, email, wallets } = data
+      res.json({ result: true, token, username, email, wallets });
     } else {
       res.json({ result: false, error: 'User not found or wrong password' });
     }
   });
 });
+
+router.put('/update', async (req, res) => {
+  const { email, password } = req.body;
+
+  // Vérifiez si au moins un champ est fourni
+  if (!email &&!password) {
+    return res.json({ result: false, error: 'At least one field must be provided' });
+  }
+
+  // Recherche de l'utilisateur par son token (exemple de critère d'identification)
+  const user = await User.findOne({ token: req.headers.authorization.split(' ')[1] });
+
+  if (!user) {
+    return res.json({ result: false, error: 'User not found' });
+  }
+
+  let updateFields = {};
+
+  // Construction de la requête de mise à jour
+  if (email) updateFields.email = email;
+  if (password) {
+    // Hash le nouveau mot de passe
+    const hashedPassword = await bcrypt.hash(password, 10);
+    updateFields.password = hashedPassword;
+  }
+
+  // Appliquer les modifications
+  Object.assign(user, updateFields);
+
+  try {
+    const savedUser = await user.save();
+    res.json({ result: true, message: 'User information updated successfully', user: savedUser });
+  } catch (err) {
+    res.json({ result: false, error: 'Failed to update user information' });
+  }
+});
+
+router.put('/:token/addWallet', (req, res) => {
+  const token = req.params.token
+  const walletAddress = req.body.address
+  console.log("walletAddress:", walletAddress)
+
+  Wallet.findOne({ address: walletAddress })
+    .then(wallet => {
+      console.log(wallet)
+      if (!wallet) {
+        console.log("wallet not found route put")
+        return res.json({ result: false, error: 'Wallet not found' });
+      }
+      User.findOne({ token })
+        .then(user => {
+          console.log("user", user)
+          if (!user) {
+            return res.json({ result: false, error: 'User not found' });
+          }
+          User.updateOne(
+            { _id: user._id },
+            { $push: { wallets: wallet._id } }
+          ).then(data => {
+            if (data.modifiedCount > 0) {
+              console.log("wallet added", data)
+              res.json({ result: true });
+            } else {
+              console.log("erreur route put add wallet")
+              res.json({ result: false, error: "error route put add wallet" })
+            }
+          });
+        })
+    })
+})
+
+router.put('/:token/removeWallet', (req, res) => {
+  const token = req.params.token
+  const walletAddress = req.body.address
+
+  Wallet.findOne({ address: walletAddress })
+    .then(wallet => {
+      console.log(wallet)
+      if (!wallet) {
+        return res.json({ result: false, error: 'Wallet not found' });
+      }
+      User.findOne({ token })
+        .then(user => {
+          console.log("user", user)
+          if (!user) {
+            return res.json({ result: false, error: 'User not found' });
+          }
+          User.updateOne(
+            { _id: user },
+            { $pull: { wallets: wallet._id } }
+          ).then(data => {
+            if (data.modifiedCount > 0) {
+              console.log("wallet added", data)
+              res.json({ result: true });
+            } else {
+              console.log("erreur route put add wallet")
+              res.json({ result: false, error: "error route put add wallet" })
+            }
+          });
+        })
+    })
+})
 
 module.exports = router;
