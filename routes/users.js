@@ -62,6 +62,44 @@ router.post('/signin', (req, res) => {
   });
 });
 
+<<<<<<< HEAD
+router.put('/update', async (req, res) => {
+  const { email, password } = req.body;
+
+  // Vérifiez si au moins un champ est fourni
+  if (!email &&!password) {
+    return res.json({ result: false, error: 'At least one field must be provided' });
+  }
+
+  // Recherche de l'utilisateur par son token (exemple de critère d'identification)
+  const user = await User.findOne({ token: req.headers.authorization.split(' ')[1] });
+
+  if (!user) {
+    return res.json({ result: false, error: 'User not found' });
+  }
+
+  let updateFields = {};
+
+  // Construction de la requête de mise à jour
+  if (email) updateFields.email = email;
+  if (password) {
+    // Hash le nouveau mot de passe
+    const hashedPassword = await bcrypt.hash(password, 10);
+    updateFields.password = hashedPassword;
+  }
+
+  // Appliquer les modifications
+  Object.assign(user, updateFields);
+
+  try {
+    const savedUser = await user.save();
+    res.json({ result: true, message: 'User information updated successfully', user: savedUser });
+  } catch (err) {
+    res.json({ result: false, error: 'Failed to update user information' });
+  }
+});
+
+=======
 router.put('/:token/addWallet', (req, res) => {
   const token = req.params.token
   const walletAddress = req.body.address
@@ -127,5 +165,6 @@ router.put('/:token/removeWallet', (req, res) => {
         })
     })
 })
+>>>>>>> 99e89e0bdd301d501137587b981483acf236be44
 
 module.exports = router;
