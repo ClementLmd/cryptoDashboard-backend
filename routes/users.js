@@ -8,6 +8,7 @@ const bcrypt = require('bcrypt'); //cryptage mot de passe
 const uid2 = require('uid2'); //création token utilisateur
 
 router.post('/signup', (req, res) => {
+  // vérification que les champs requis sont présents
   if (!checkBody(req.body, ['username', 'email', 'password'])) {
     res.json({ result: false, error: 'Missing or empty fields' });
     return;
@@ -18,8 +19,10 @@ router.post('/signup', (req, res) => {
 
       User.findOne({ email: { $regex: new RegExp(req.body.email, 'i') } }).then(data => { //est-ce que l'email existe déjà ?
         if (data === null) {
+          // hachage du mot de passe
           const hash = bcrypt.hashSync(req.body.password, 10);
 
+          // création d'un nouvel utilisateur
           const newUser = new User({
             username: req.body.username,
             email: req.body.email,
@@ -40,7 +43,6 @@ router.post('/signup', (req, res) => {
       })
 
     } else {
-      // User already exists in database
       res.json({ result: false, error: 'User already exists' });
     }
   });
@@ -51,8 +53,9 @@ router.post('/signin', (req, res) => {
     res.json({ result: false, error: 'Missing or empty fields' });
     return;
   }
-
+  // recherche de l'utilisateur par son username
   User.findOne({ username: req.body.username }).then(data => {
+    // vérification du mot de passe
     if (data && bcrypt.compareSync(req.body.password, data.password)) {
       const { token, username, email, wallets } = data
       res.json({ result: true, token, username, email, wallets });
@@ -66,7 +69,7 @@ router.put('/update', async (req, res) => {
   const { email, password } = req.body;
 
   // Vérifiez si au moins un champ est fourni
-  if (!email &&!password) {
+  if (!email && !password) {
     return res.json({ result: false, error: 'At least one field must be provided' });
   }
 
@@ -103,6 +106,7 @@ router.put('/:token/addWallet', (req, res) => {
   const walletAddress = req.body.address
   console.log("walletAddress:", walletAddress)
 
+  // recherche du portefeuille par son adresse
   Wallet.findOne({ address: walletAddress })
     .then(wallet => {
       console.log(wallet)
@@ -110,12 +114,14 @@ router.put('/:token/addWallet', (req, res) => {
         console.log("wallet not found route put")
         return res.json({ result: false, error: 'Wallet not found' });
       }
+      // recherche de l'utilisateur par son token
       User.findOne({ token })
         .then(user => {
           console.log("user", user)
           if (!user) {
             return res.json({ result: false, error: 'User not found' });
           }
+          // ajout de l'identifiant du portefeuille à la liste des portefeuilles de l'utilisateur
           User.updateOne(
             { _id: user._id },
             { $push: { wallets: wallet._id } }
@@ -148,6 +154,7 @@ router.put('/:token/removeWallet', (req, res) => {
           if (!user) {
             return res.json({ result: false, error: 'User not found' });
           }
+          // suppression de l'identifiant du portefeuille de la liste des portefeuilles de l'utilisateur
           User.updateOne(
             { _id: user },
             { $pull: { wallets: wallet._id } }

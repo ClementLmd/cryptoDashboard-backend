@@ -4,18 +4,21 @@ var router = express.Router();
 const Wallet = require('../models/wallets');
 const User = require('../models/users');
 
+// route pour ajouter un nouveau portefeuille
 router.post('/', (req, res) => {
     const { nameWallet, address, blockchain, user } = req.body
-    console.log("req.body", req.body)
+    // console.log("req.body", req.body)
+    // recherche de l'utilisateur par son token
     User.findOne({ token: user })
         .then(user => {
-            console.log("user", user)
+            // console.log("user", user)
             if (!user) {
                 return res.json({ result: false, error: 'User not found' });
             }
 
             Wallet.findOne({ address, user })
-                .populate('user').then(data => {
+                .populate('user')
+                .then(data => {
                     console.log("data route post", data)
                     if (data === null) {
 
@@ -27,6 +30,7 @@ router.post('/', (req, res) => {
                         });
 
                         newWallet.save().then(newDoc => {
+                            console.log("new wallet created : ", newDoc)
                             res.json({ result: true, newDoc });
                         });
 
@@ -48,16 +52,17 @@ router.get('/:token', (req, res) => {
             }
 
             Wallet.find({ user: user._id })
-                .populate('user')
+                // .populate('user')
                 .populate('holdings.crypto')
                 .then(listWallets => {
                     if (listWallets) {
                         console.log("liste des wallets d'un user:", listWallets)
+                        // on recrée un tableau sans envoyer au frontend l'id mongodb du user
                         const listWalletsLessId = listWallets.map(wallet => {
                             return {
                                 nameWallet: wallet.nameWallet,
                                 address: wallet.address,
-                                user: wallet.user,
+                                // user: wallet.user,
                                 blockchain: wallet.blockchain,
                                 holdings: wallet.holdings
                             };
