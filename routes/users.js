@@ -171,4 +171,42 @@ router.put('/:token/removeWallet', (req, res) => {
     })
 })
 
+router.put('/:token/updateTotalValue', (req, res) => {
+  const token = req.params.token
+  const { totalValue } = req.body
+  const date = new Date().toDateString()
+  console.log("date:", date)
+
+  User.findOne({ token })
+    .then(user => {
+      if (!user) {
+        return res.json({ result: false, error: 'User not found' });
+      }
+      const lastValue = user.totalValue[user.totalValue.length - 1]
+      console.log("last value:", lastValue)
+
+      if (!lastValue || lastValue.date.toDateString() !== new Date(date).toDateString()) {
+        User.updateOne(
+          { token },
+          {
+            $push: {
+              totalValue: {
+                value:totalValue,
+                date
+              }
+            }
+          }
+        ).then(data => {
+          if (data.modifiedCount > 0) {
+            console.log("totalValue added", data)
+            res.json({ result: true });
+          } 
+        })
+      } else {
+        console.log("totalValue déjà ajoutée aujourd'hui")
+        res.json({ result: false, error: "totalValue déjà ajoutée aujourd'hui" })
+      }
+    });
+})
+
 module.exports = router;
