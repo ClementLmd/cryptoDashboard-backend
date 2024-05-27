@@ -94,7 +94,7 @@ router.put('/contentWallet/:token', (req, res) => {
                         });
                 } else if (blockchain === "Bitcoin") {
                     cryptoName = "BTC";
-                    return fetch(`https://blockchain.info/rawaddr/${address}`)
+                    return fetch(`https://api.blockcypher.com/v1/btc/main/addrs/${address}/balance`)
                         .then(response => response.json())
                         .then(data => {
                             if (data.error) {
