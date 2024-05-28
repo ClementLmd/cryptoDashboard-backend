@@ -5,7 +5,7 @@ const Wallet = require('../models/wallets');
 const Crypto = require('../models/cryptos');
 const User = require('../models/users');
 
-const ETH_API_KEY = "ZGJ85Q1912CX99S2A9JE6Q1VYPDVK9KC5S"
+const ETH_API_KEY = process.env.ETH_API_KEY
 
 router.put('/contentWallet/:token', (req, res) => {
     const { token } = req.params;
