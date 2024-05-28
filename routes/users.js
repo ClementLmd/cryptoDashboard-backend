@@ -33,8 +33,8 @@ router.post('/signup', (req, res) => {
           });
 
           newUser.save().then(newDoc => {
-            const { token, username, email, wallets } = newDoc
-            res.json({ result: true, token, username, email, wallets });
+            const { token, username, email, wallets, totalValue } = newDoc
+            res.json({ result: true, token, username, email, wallets, totalValue });
           });
 
         } else {
@@ -57,8 +57,8 @@ router.post('/signin', (req, res) => {
   User.findOne({ username: req.body.username }).then(data => {
     // vérification du mot de passe
     if (data && bcrypt.compareSync(req.body.password, data.password)) {
-      const { token, username, email, wallets } = data
-      res.json({ result: true, token, username, email, wallets });
+      const { token, username, email, wallets, totalValue } = data
+      res.json({ result: true, token, username, email, wallets, totalValue });
     } else {
       res.json({ result: false, error: 'User not found or wrong password' });
     }
@@ -174,7 +174,7 @@ router.put('/:token/removeWallet', (req, res) => {
 router.put('/:token/updateTotalValue', (req, res) => {
   const token = req.params.token
   const { totalValue } = req.body
-  const date = new Date().toDateString()
+  const date = Date.now()
   console.log("date:", date)
 
   User.findOne({ token })
@@ -185,28 +185,27 @@ router.put('/:token/updateTotalValue', (req, res) => {
       const lastValue = user.totalValue[user.totalValue.length - 1]
       console.log("last value:", lastValue)
 
-      if (!lastValue || lastValue.date.toDateString() !== new Date(date).toDateString()) {
-        User.updateOne(
-          { token },
-          {
-            $push: {
-              totalValue: {
-                value:totalValue,
-                date
-              }
+      User.updateOne(
+        { token },
+        {
+          $push: {
+            totalValue: {
+              value: totalValue,
+              date
             }
           }
-        ).then(data => {
-          if (data.modifiedCount > 0) {
-            console.log("totalValue added", data)
-            res.json({ result: true });
-          } 
-        })
-      } else {
-        console.log("totalValue déjà ajoutée aujourd'hui")
-        res.json({ result: false, error: "totalValue déjà ajoutée aujourd'hui" })
-      }
-    });
-})
+        }
+      ).then(data => {
+        if (data.modifiedCount > 0) {
+          console.log("totalValue added", data)
+          res.json({ result: true });
+        } else {
+          console.log("erreur ajout totalValue")
+          res.json({ result: false, error: "erreur ajout totalValue" })
+        }
+      })
+    })
+});
+
 
 module.exports = router;
