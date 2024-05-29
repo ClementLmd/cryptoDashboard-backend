@@ -71,7 +71,7 @@ router.post('/signin', (req, res) => {
 router.put('/update/:token', async (req, res) => {
   const { email, password } = req.body;
   const token = req.params.token
-
+  console.log("req body", req.body)
   // Vérifiez si au moins un champ est fourni
   if (!email && !password) {
     return res.json({ result: false, error: 'At least one field must be provided' });
@@ -87,8 +87,8 @@ router.put('/update/:token', async (req, res) => {
   let updateFields = {};
 
   // Construction de la requête de mise à jour
-  if (email) updateFields.email = email;
-  if (password) {
+  if (email !== user.email) updateFields.email = email;
+  if (password !== '') {
     // Hash le nouveau mot de passe
     const hashedPassword = await bcrypt.hash(password, 10);
     updateFields.password = hashedPassword;
@@ -99,7 +99,7 @@ router.put('/update/:token', async (req, res) => {
 
   try {
     const savedUser = await user.save();
-    res.json({ result: true, message: 'User information updated successfully', user: savedUser });
+    res.json({ result: true, message: 'User information updated successfully', email: savedUser.email });
   } catch (err) {
     res.json({ result: false, error: 'Failed to update user information' });
   }
