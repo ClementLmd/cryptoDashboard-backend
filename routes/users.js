@@ -65,8 +65,9 @@ router.post('/signin', (req, res) => {
   });
 });
 
-router.put('/update', async (req, res) => {
+router.put('/update/:token', async (req, res) => {
   const { email, password } = req.body;
+  const token = req.params.token
 
   // Vérifiez si au moins un champ est fourni
   if (!email && !password) {
@@ -74,7 +75,7 @@ router.put('/update', async (req, res) => {
   }
 
   // Recherche de l'utilisateur par son token (exemple de critère d'identification)
-  const user = await User.findOne({ token: req.headers.authorization.split(' ')[1] });
+  const user = await User.findOne({ token });
 
   if (!user) {
     return res.json({ result: false, error: 'User not found' });
