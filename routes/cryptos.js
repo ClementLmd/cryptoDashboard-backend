@@ -5,7 +5,7 @@ const Wallet = require('../models/wallets');
 const Crypto = require('../models/cryptos');
 const User = require('../models/users');
 
-const ETH_API_KEY="ZGJ85Q1912CX99S2A9JE6Q1VYPDVK9KC5S"
+const ETH_API_KEY = process.env.ETH_API_KEY
 
 router.put('/contentWallet/:token', (req, res) => {
     const { token } = req.params;
@@ -94,7 +94,7 @@ router.put('/contentWallet/:token', (req, res) => {
                         });
                 } else if (blockchain === "Bitcoin") {
                     cryptoName = "BTC";
-                    return fetch(`https://blockchain.info/rawaddr/${address}`)
+                    return fetch(`https://api.blockcypher.com/v1/btc/main/addrs/${address}/balance`)
                         .then(response => response.json())
                         .then(data => {
                             if (data.error) {
@@ -196,5 +196,42 @@ router.put('/contentWallet/:token', (req, res) => {
                 })
         })
 });
+
+router.post('/price', (req, res) => {
+    fetch('https://api.coincap.io/v2/assets')
+        .then(response => response.json())
+        .then(dataApi => {
+            dataApi.data.forEach(async asset => {
+                const existingCrypto = await Crypto.findOne({ name: asset.symbol })
+
+                if (existingCrypto === null) {
+                    const newCrypto = new Crypto({
+                        name: asset.symbol,
+                        price: asset.priceUsd
+                    });
+                    await newCrypto.save()
+                } else {
+                    const currentPrice = parseFloat(existingCrypto.price);
+                    const newPrice = parseFloat(asset.priceUsd);
+
+                    if (currentPrice !== newPrice) {
+                        const updateResult = await Crypto.updateOne(
+                            { name: asset.symbol },
+                            { $set: { price: asset.priceUsd } }
+                        )
+                        if (updateResult.modifiedCount > 0) {
+                            console.log(`Updated crypto: ${asset.symbol} with new price ${asset.priceUsd}`);
+                        } else {
+                            console.log(`Crypto ${asset.symbol} found but not updated. Maybe the price was the same.`);
+                        }
+                    } else {
+                        console.log(`Crypto ${asset.symbol} already has the same price: ${asset.priceUsd}`);
+                    }
+                }
+            })
+            res.json({ result: true })
+        })
+})
+
 
 module.exports = router;
