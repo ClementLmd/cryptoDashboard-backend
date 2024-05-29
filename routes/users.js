@@ -7,12 +7,15 @@ const { checkBody } = require('../modules/checkBody');
 const bcrypt = require('bcrypt'); //cryptage mot de passe
 const uid2 = require('uid2'); //création token utilisateur
 
+
 router.post('/signup', (req, res) => {
   // vérification que les champs requis sont présents
   if (!checkBody(req.body, ['username', 'email', 'password'])) {
     res.json({ result: false, error: 'Missing or empty fields' });
     return;
   }
+
+ 
 
   User.findOne({ username: { $regex: new RegExp(req.body.username, 'i') } }).then(data => { //est-ce que le username existe déjà ?
     if (data === null) {
