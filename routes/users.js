@@ -68,7 +68,6 @@ router.post('/signin', (req, res) => {
   });
 });
 
-<<<<<<< HEAD
 router.put('/update', async (req, res) => {
   const { email, password } = req.body;
 
@@ -105,7 +104,6 @@ router.put('/update', async (req, res) => {
   }
 });
 
-=======
 router.put('/:token/addWallet', (req, res) => {
   const token = req.params.token
   const walletAddress = req.body.address
@@ -175,6 +173,5 @@ router.put('/:token/removeWallet', (req, res) => {
         })
     })
 })
->>>>>>> 99e89e0bdd301d501137587b981483acf236be44
 
 module.exports = router;
