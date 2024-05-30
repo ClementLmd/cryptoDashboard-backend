@@ -7,19 +7,25 @@ const { checkBody } = require('../modules/checkBody');
 const bcrypt = require('bcrypt'); //cryptage mot de passe
 const uid2 = require('uid2'); //création token utilisateur
 
+
 router.post('/signup', (req, res) => {
+  // vérification que les champs requis sont présents
   if (!checkBody(req.body, ['username', 'email', 'password'])) {
     res.json({ result: false, error: 'Missing or empty fields' });
     return;
   }
+
+ 
 
   User.findOne({ username: { $regex: new RegExp(req.body.username, 'i') } }).then(data => { //est-ce que le username existe déjà ?
     if (data === null) {
 
       User.findOne({ email: { $regex: new RegExp(req.body.email, 'i') } }).then(data => { //est-ce que l'email existe déjà ?
         if (data === null) {
+          // hachage du mot de passe
           const hash = bcrypt.hashSync(req.body.password, 10);
 
+          // création d'un nouvel utilisateur
           const newUser = new User({
             username: req.body.username,
             email: req.body.email,
@@ -30,8 +36,8 @@ router.post('/signup', (req, res) => {
           });
 
           newUser.save().then(newDoc => {
-            const { token, username, email, wallets } = newDoc
-            res.json({ result: true, token, username, email, wallets });
+            const { token, username, email, wallets, totalValue } = newDoc
+            res.json({ result: true, token, username, email, wallets, totalValue });
           });
 
         } else {
@@ -40,7 +46,6 @@ router.post('/signup', (req, res) => {
       })
 
     } else {
-      // User already exists in database
       res.json({ result: false, error: 'User already exists' });
     }
   });
@@ -51,22 +56,62 @@ router.post('/signin', (req, res) => {
     res.json({ result: false, error: 'Missing or empty fields' });
     return;
   }
-
+  // recherche de l'utilisateur par son username
   User.findOne({ username: req.body.username }).then(data => {
+    // vérification du mot de passe
     if (data && bcrypt.compareSync(req.body.password, data.password)) {
-      const { token, username, email, wallets } = data
-      res.json({ result: true, token, username, email, wallets });
+      const { token, username, email, wallets, totalValue } = data
+      res.json({ result: true, token, username, email, wallets, totalValue });
     } else {
       res.json({ result: false, error: 'User not found or wrong password' });
     }
   });
 });
 
+<<<<<<< HEAD
+router.put('/update', async (req, res) => {
+  const { email, password } = req.body;
+
+  // Vérifiez si au moins un champ est fourni
+  if (!email &&!password) {
+    return res.json({ result: false, error: 'At least one field must be provided' });
+  }
+
+  // Recherche de l'utilisateur par son token (exemple de critère d'identification)
+  const user = await User.findOne({ token: req.headers.authorization.split(' ')[1] });
+
+  if (!user) {
+    return res.json({ result: false, error: 'User not found' });
+  }
+
+  let updateFields = {};
+
+  // Construction de la requête de mise à jour
+  if (email) updateFields.email = email;
+  if (password) {
+    // Hash le nouveau mot de passe
+    const hashedPassword = await bcrypt.hash(password, 10);
+    updateFields.password = hashedPassword;
+  }
+
+  // Appliquer les modifications
+  Object.assign(user, updateFields);
+
+  try {
+    const savedUser = await user.save();
+    res.json({ result: true, message: 'User information updated successfully', user: savedUser });
+  } catch (err) {
+    res.json({ result: false, error: 'Failed to update user information' });
+  }
+});
+
+=======
 router.put('/:token/addWallet', (req, res) => {
   const token = req.params.token
   const walletAddress = req.body.address
   console.log("walletAddress:", walletAddress)
 
+  // recherche du portefeuille par son adresse
   Wallet.findOne({ address: walletAddress })
     .then(wallet => {
       console.log(wallet)
@@ -74,12 +119,14 @@ router.put('/:token/addWallet', (req, res) => {
         console.log("wallet not found route put")
         return res.json({ result: false, error: 'Wallet not found' });
       }
+      // recherche de l'utilisateur par son token
       User.findOne({ token })
         .then(user => {
           console.log("user", user)
           if (!user) {
             return res.json({ result: false, error: 'User not found' });
           }
+          // ajout de l'identifiant du portefeuille à la liste des portefeuilles de l'utilisateur
           User.updateOne(
             { _id: user._id },
             { $push: { wallets: wallet._id } }
@@ -112,6 +159,7 @@ router.put('/:token/removeWallet', (req, res) => {
           if (!user) {
             return res.json({ result: false, error: 'User not found' });
           }
+          // suppression de l'identifiant du portefeuille de la liste des portefeuilles de l'utilisateur
           User.updateOne(
             { _id: user },
             { $pull: { wallets: wallet._id } }
@@ -127,5 +175,6 @@ router.put('/:token/removeWallet', (req, res) => {
         })
     })
 })
+>>>>>>> 99e89e0bdd301d501137587b981483acf236be44
 
 module.exports = router;
